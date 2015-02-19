@@ -118,8 +118,6 @@
 			}
 		}
 
-		[syllableRows release];
-
 		NSString *titlePath = [bundle pathForResource:@"title" ofType:@"csv"];
 		NSString *titleFile = [NSString stringWithContentsOfFile:titlePath usedEncoding:&encoding error:&error];
 		NSArray *titleRows = [[NSArray alloc] initWithArray:[titleFile componentsSeparatedByString:@"\n"]];
@@ -180,8 +178,6 @@
 			}
 		}
 
-		[titleRows release];
-
 		NSString *namePath = [bundle pathForResource:@"name" ofType:@"csv"];
 		NSString *nameFile = [NSString stringWithContentsOfFile:namePath usedEncoding:&encoding error:&error];
 		NSArray *nameRows = [[NSArray alloc] initWithArray:[nameFile componentsSeparatedByString:@"\n"]];
@@ -216,8 +212,6 @@
 				}
 			}
 		}
-
-		[nameRows release];
 	}
 	return self;
 }
@@ -227,12 +221,12 @@
 	return (NSUInteger) floor(arc4random() % max);
 }
 
-- (NSString *)getName
+- (NSString *)getRandomName
 {
-	return [self getName:YES male:YES prefix:YES postfix:YES];
+	return [self getRandomName:YES male:YES prefix:YES postfix:YES];
 }
 
-- (NSString *)getName:(BOOL)generated male:(BOOL)sex prefix:(BOOL)prefix postfix:(BOOL)postfix
+- (NSString *)getRandomName:(BOOL)generated male:(BOOL)sex prefix:(BOOL)prefix postfix:(BOOL)postfix
 {
 	NSMutableString *newName = [NSMutableString string];
 
@@ -278,6 +272,68 @@
 	}
 
 	return newName;
+}
+
+// djb2 algorithm for hashing string
+- (unsigned long) hashString: (NSString *) stringToHash {
+    const char* str = [stringToHash UTF8String];
+    unsigned long hash = 5381;
+    int c;
+    c = *str++;
+    while (c) {
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        c = *str++;
+    }
+    return hash;
+}
+
+- (NSString *)getHashName:(BOOL)generated male:(BOOL)sex prefix:(BOOL)prefix postfix:(BOOL)postfix withHash: (NSString *) stringToHash
+{
+    NSMutableString *newName = [NSMutableString string];
+    unsigned long index = [self hashString: stringToHash];
+    
+    BOOL preAdded = NO;
+    if (prefix && (index % 100 < PRE_CHANCE))
+    {
+        [newName appendString:[(sex ? malePre : femalePre) objectAtIndex: index % [(sex ? malePre : femalePre) count]]];
+        [newName appendString:@" "];
+        preAdded = YES;
+    }
+    
+    if (generated && (index % 100 < GENERATED_CHANCE))
+    {
+        [newName appendString:[(sex ? maleStart : femaleStart) objectAtIndex: index % [(sex ? maleStart : femaleStart) count]]];
+        
+        if (index % 100 < VOWEL_CHANCE)
+        {
+            [newName appendString:[vowel objectAtIndex: index % [vowel count]]];
+        }
+        
+        if (index % 100 < MIDDLE1_CHANCE)
+        {
+            [newName appendString:[(sex ? maleMiddle : femaleMiddle) objectAtIndex:index % [(sex ? maleMiddle : femaleMiddle) count]]];
+        }
+        if (index % 100 < MIDDLE2_CHANCE)
+        {
+            [newName appendString:[(sex ? maleMiddle : femaleMiddle) objectAtIndex:index % [(sex ? maleMiddle : femaleMiddle) count]]];
+        }
+        
+        [newName appendString:[(sex ? maleEnd : femaleEnd) objectAtIndex:index % [(sex ? maleEnd : femaleEnd) count]]];
+    }
+    else
+    {
+        [newName appendString:[(sex ? male : female) objectAtIndex:index % [(sex ? male : female) count]]];
+    }
+    
+    int postChance = POST_CHANCE;
+    if (preAdded) postChance += 50;
+    if (postfix && (index % 100 > postChance))
+    {
+        [newName appendString:@" "];
+        [newName appendString:[(sex ? malePost : femalePost) objectAtIndex: index % [(sex ? malePost : femalePost) count]]];
+    }
+    
+    return newName;
 }
 
 @end

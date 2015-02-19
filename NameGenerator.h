@@ -1,3 +1,5 @@
+#import <UIKit/UIKit.h>
+
 @interface NameGenerator : NSObject
 {
   NSMutableArray *vowel;
@@ -19,8 +21,8 @@
 	NSMutableArray *female;
 }
 
-- (NSString *)getName;
-
-- (NSString *)getName:(BOOL)generated male:(BOOL)sex prefix:(BOOL)prefix postfix:(BOOL)postfix;
+- (NSString *)getRandomName;
+- (NSString *)getRandomName:(BOOL)generated male:(BOOL)sex prefix:(BOOL)prefix postfix:(BOOL)postfix;
+- (NSString *)getHashName:(BOOL)generated male:(BOOL)sex prefix:(BOOL)prefix postfix:(BOOL)postfix withHash: (NSString *) stringToHash;
 
 @end
